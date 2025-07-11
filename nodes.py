@@ -5,6 +5,7 @@ import comfy.sample
 import nodes
 import node_helpers
 import latent_preview
+from comfy.comfy_types import IO
 
 def emptyimage(width, height, batch_size=1, color=(0,0,0)):
     r = torch.full([batch_size, height, width, 1], color[0] / 255, dtype=torch.float32, device="cpu")
@@ -17,7 +18,7 @@ def imagecrop(image, width, height, x, y):
     y = min(y, image.shape[1] - 1)
     to_x = width + x
     to_y = height + y
-    img = image[:,y:to_y, x:to_x, :]
+    img = image[:,y:to_y, x:to_x, :].clone()
     return img
 
 def feather(mask, left=0, top=0, right=0, bottom=0):
@@ -132,13 +133,25 @@ def temporalistgen(num_total_frame, length, num_crossfade, num_loopback_crossfad
             raise ValueError("temporalistgen: loopback_crossfade数值过大，尝试减小\nloopback_crossfade too large")
     return slice_list
 
-def corssfadevideos(video1, video2, num_corssfade_frame):
+def crop_resize_img_list(croparea_list, image):
+    image_list = []
+    init_width = croparea_list[0]['width_crop']
+    init_height = croparea_list[0]['height_crop']
+    for item in croparea_list:
+        cropped_image = imagecrop(image, item['width_crop'], item['height_crop'], item['offset_x'], item['offset_y'])
+        if cropped_image.shape[1] != init_height or cropped_image.shape[2] != init_width:
+            cropped_image = comfy.utils.common_upscale(cropped_image.movedim(-1, 1), init_width, init_height, "bilinear", "center").movedim(1, -1)
+        image_list.append(cropped_image)
+    result = torch.cat(image_list, dim=0)
+    return result
+
+def crossfadevideos(video1, video2, num_corssfade_frame):
     if video1.ndim != video2.ndim:
-        raise ValueError("corssfadevideos: 拼接图片类型不一致\nImageType Mismatch")
+        raise ValueError("crossfadevideos: 拼接图片类型不一致\nImageType Mismatch")
     if video1[[0],].shape != video2[[0],].shape:
-        raise ValueError("corssfadevideos: 拼接图片尺寸不一致\nImageSize Mismatch")
+        raise ValueError("crossfadevideos: 拼接图片尺寸不一致\nImageSize Mismatch")
     if num_corssfade_frame > video1.shape[0] or num_corssfade_frame > video2.shape[0]:
-        raise ValueError("corssfadevideos: 拼接图片数目应大于过渡数目\nVideoLength should be longer than CrossLength")
+        raise ValueError("crossfadevideos: 拼接图片数目应大于过渡数目\nVideoLength should be longer than CrossLength")
     video_slice1 = video1[:-num_corssfade_frame]
     video_slice2 = video1[-num_corssfade_frame:]
     video_slice3 = video2[:num_corssfade_frame]
@@ -160,7 +173,7 @@ def corssfadevideos(video1, video2, num_corssfade_frame):
     return result
 
 def vace_sample(model, positive, negative, vae, width, height, length, strength, seed, cfg, sampler_name, scheduler, steps, denoise, video,
-                control_video=None, control_masks=None, reference_image=None):
+                control_video=None, control_masks=None, reference_image=None, tile_control_video=None):
     # from comfyui
     latent_length = ((length - 1) // 4) + 1
     if control_video is not None:
@@ -213,16 +226,23 @@ def vace_sample(model, positive, negative, vae, width, height, length, strength,
 
     mask = mask.unsqueeze(0)
 
-    positive = node_helpers.conditioning_set_values(positive, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
-    negative = node_helpers.conditioning_set_values(negative, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
-
     # sample
 
     latent = vae.encode(video[:,:,:,:3])
     if reference_image is not None:
         latent = torch.cat((reference_image_vaed, latent), dim=2)
-    noise = comfy.sample.prepare_noise(latent, seed)
+    # add "concat_latent_image" to support tile control lora
+    if tile_control_video is not None:
+        tile_control_latent = vae.encode(tile_control_video[:,:,:,:3])
+        if reference_image is not None:
+            tile_control_latent = torch.cat((reference_image_vaed, tile_control_latent), dim=2)
+        positive = node_helpers.conditioning_set_values(positive, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength], "concat_latent_image": tile_control_latent}, append=True)
+        negative = node_helpers.conditioning_set_values(negative, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength], "concat_latent_image": tile_control_latent}, append=True)
+    else:
+        positive = node_helpers.conditioning_set_values(positive, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
+        negative = node_helpers.conditioning_set_values(negative, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
 
+    noise = comfy.sample.prepare_noise(latent, seed)
     callback = latent_preview.prepare_callback(model, steps)
     disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
     samples = comfy.sample.sample(model, noise, steps, cfg, sampler_name, scheduler, positive, negative, latent,
@@ -266,6 +286,7 @@ class UltimateVideoUpscaler:
                 "croparea_list": ("LIST", ),
                 "reference_image": ("IMAGE", ),
                 "control_video": ("IMAGE", ),
+                "tile_control_video": ("IMAGE", ),
             }
         }
 
@@ -286,18 +307,23 @@ QQ群：948626609
     
     def upscale_video(self, model, width_upscale, height_upscale, width, height, length, pad_mask_limit, crossfade_frame, loopback_crossfade, 
                       crop_ref, ref_as_init_frame, noise_aug, input_video, seed, steps, cfg, sampler_name, scheduler, positive, negative, denoise, vae, 
-                      croparea_list=None, reference_image=None, control_video=None):
+                      croparea_list=None, reference_image=None, control_video=None, tile_control_video=None):
         if control_video is not None and control_video.shape[0] != input_video.shape[0]:
             raise ValueError("控制视频帧数与输入视频帧数应当一致\nFrame count of ControlVideo and InputVideo should be the same")
+        if tile_control_video is not None and tile_control_video.shape[0] != input_video.shape[0]:
+            raise ValueError("tile控制视频帧数与输入视频帧数应当一致\nFrame count of TileControlVideo and InputVideo should be the same")
         if loopback_crossfade > 0:
             cross_slice = input_video[:loopback_crossfade].clone()
             input_video = torch.cat((input_video, cross_slice), dim=0)
             if control_video is not None:
                 control_cross_slice = control_video[:loopback_crossfade].clone()
                 control_video = torch.cat((control_video, control_cross_slice), dim=0)
+            if tile_control_video is not None:
+                tile_control_cross_slice = tile_control_video[:loopback_crossfade].clone()
+                tile_control_video = torch.cat((tile_control_video, tile_control_cross_slice), dim=0)
         total_frame = input_video.shape[0]
         if total_frame > length and crossfade_frame == 0:
-            raise ValueError("视频帧数大于length，需要设置crossfade_frame以启用时间分割\nFrame count of input video is larger than length, need set a proper value for crossfade_frame to enable temporal tiling")        
+            raise ValueError("视频帧数大于length，需要设置crossfade_frame以启用时间分割\nFrame count of input video is larger than length, need set a proper value for crossfade_frame to enable temporal tiling")
         strength = 1 # VACE Strength
         temporalist = temporalistgen(total_frame, length, crossfade_frame, loopback_crossfade)
         upscaled_videos_list = []
@@ -309,8 +335,11 @@ QQ群：948626609
             upscaled_video = comfy.utils.common_upscale(input_video[start_index:(start_index + length_n)].movedim(-1, 1), width_upscale, height_upscale, "bilinear", "center").movedim(1, -1)
             if control_video is not None:
                 up_scaled_control = comfy.utils.common_upscale(control_video[start_index:(start_index + length_n)].movedim(-1, 1), width_upscale, height_upscale, "bilinear", "center").movedim(1, -1)
+            if tile_control_video is not None:
+                up_scaled_tile_control = comfy.utils.common_upscale(tile_control_video[start_index:(start_index + length_n)].movedim(-1, 1), width_upscale, height_upscale, "bilinear", "center").movedim(1, -1)
             upscaled_video = add_noise(upscaled_video, noise_aug, seed)
             if turn_index > 0 and cross_fade > 0:
+                # replace crossfade frames
                 upscaled_video[:cross_fade] = upscaled_videos_list[turn_index-1][-cross_fade:].clone()
             if croparea_list is None:
                 croparea_list = spatialistgen(width_upscale, height_upscale, width, height)
@@ -336,6 +365,10 @@ QQ群：948626609
                     controls = imgcomposite(crop_ctl, crop_gen, 0, 0, 1-mask_ctl) if index != 0 else crop_ctl
                 else:
                     controls = crop_gen if index != 0 else torch.full((length_n, height_crop_n, width_crop_n, 3), 0.5, device='cpu')
+                if tile_control_video is not None:
+                    crop_tile_ctl = imagecrop(up_scaled_tile_control, width_crop_n, height_crop_n, offset_x_n, offset_y_n)
+                else:
+                    crop_tile_ctl = None
                 if reference_image is not None:
                     reference_image = comfy.utils.common_upscale(reference_image.movedim(-1, 1), width_upscale, height_upscale, "bilinear", "center").movedim(1, -1)
                     if crop_ref is True:
@@ -352,12 +385,17 @@ QQ群：948626609
                     init_ctl = imagecrop(upscaled_videos_list[turn_index-1][-cross_fade:].clone(), width_crop_n, height_crop_n, offset_x_n, offset_y_n)
                     controls[:cross_fade] = init_ctl
                     mask_ctl[:cross_fade] = torch.full((1, height_crop_n, width_crop_n), 0.0, device='cpu')
+                    # if crop_tile_ctl is not None:
+                    #     init_tile_ctl = imagecrop(upscaled_videos_list[turn_index-1][-cross_fade:].clone(), width_crop_n, height_crop_n, offset_x_n, offset_y_n)
+                    #     controls[:cross_fade] = init_ctl
                 if turn['flag_final_slice'] is True and loopback_crossfade > 0:
                     end_ctl = imagecrop(upscaled_videos_list[0][:loopback_crossfade].clone(), width_crop_n, height_crop_n, offset_x_n, offset_y_n)
                     controls[-loopback_crossfade:] = end_ctl
                     mask_ctl[-loopback_crossfade:] = torch.full((1, height_crop_n, width_crop_n), 0.0, device='cpu')
+                if 'cond_p' in item:
+                    positive = item['cond_p']
                 sampled_video = vace_sample(model, positive, negative, vae, width_crop_n, height_crop_n, length_n, strength, seed, cfg, sampler_name, scheduler, steps, denoise, video,
-                    controls, mask_ctl, refimg)
+                    controls, mask_ctl, refimg, crop_tile_ctl)
                 mask_feather = feather(torch.full((1, height_crop_n, width_crop_n), 1.0, device='cpu'), item['feather_left'], item['feather_top'], item['feather_right'], item['feather_bottom'])
                 mask_feather = repeat_tensor(mask_feather, length_n)
                 result_video = imgcomposite(result_video, sampled_video, offset_x_n, offset_y_n, mask_feather)
@@ -370,10 +408,10 @@ QQ群：948626609
         index = 0
         while index < len(upscaled_videos_list):
             cross_fade = temporalist[index + 1]['num_crossfade']
-            result_video = corssfadevideos(result_video, upscaled_videos_list[index], cross_fade)
+            result_video = crossfadevideos(result_video, upscaled_videos_list[index], cross_fade)
             index += 1
         if loopback_crossfade > 0:
-            crossed_start = corssfadevideos(result_video[-loopback_crossfade:], result_video[:loopback_crossfade], loopback_crossfade)
+            crossed_start = crossfadevideos(result_video[-loopback_crossfade:], result_video[:loopback_crossfade], loopback_crossfade)
             result_video[:loopback_crossfade] = crossed_start
             result_video = result_video[:(total_frame - loopback_crossfade)]
         return (result_video, )
@@ -385,19 +423,33 @@ class CustomCropArea:
             "required": {
                 "width_upscale": ("INT", {"default": 1280, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 8}),
                 "height_upscale": ("INT", {"default": 720, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 8}),
-                "presets": (["'H' for wide screen", "'三' for long narrow screen"], {
-                    "default": "'H' for wide screen",
+                "width": ("INT", {"default": 832, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 16}),
+                "height": ("INT", {"default": 480, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 16}),
+                "presets": (["default", "'H' for wide screen", "'三' for long narrow screen"], {
+                    "default": "default",
                     "tooltip": "预设分割方案\nPresets of cropping plan"
                 }),
+            },
+            "optional": {
+                "reference_image": ("IMAGE", ),
             }
         }
 
-    RETURN_TYPES = ("LIST",)
+    RETURN_TYPES = ("LIST", "IMAGE")
+    RETURN_NAMES = ("croparea_list", "IMAGE")
     FUNCTION = "custom_croplist_gen"
     CATEGORY = "SuperUltimateVaceTools"
     DESCRIPTION = "Use preset of cropping plan"
-    def custom_croplist_gen(self, width_upscale, height_upscale, presets):
-        if presets == "'H' for wide screen":
+    def custom_croplist_gen(self, width_upscale, height_upscale, width, height, presets, reference_image=None):
+        if reference_image is not None:
+            reference_image = comfy.utils.common_upscale(reference_image.movedim(-1, 1), width_upscale, height_upscale, "bilinear", "center").movedim(1, -1)
+
+        if presets == "default":
+            # same as SuperUltimateVACEUpscale
+            result = spatialistgen(width_upscale, height_upscale, width, height)
+
+        elif presets == "'H' for wide screen":
+            # left&right cropped image will be stretched
             if height_upscale%16 != 0:
                 raise ValueError("‘H’方案下放大高度必须为16的倍数\n'H' plan requires height_upscale to be multiplier of 16")
             result = [
@@ -523,15 +575,48 @@ class CustomCropArea:
                 'feather_bottom': 0,
                 },
             ]
-        return (result,)
+        if reference_image is not None:
+            img_batch = crop_resize_img_list(result, reference_image)
+        else:
+            img_batch = None
+        return (result, img_batch)
+
+class BatchPrompt:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "clip": (IO.CLIP, {"tooltip": "The CLIP model used for encoding the text."}),
+                "prompt_list": ("STRING", ),
+                "croparea_list": ("LIST", ),
+            }
+        }
+
+    RETURN_TYPES = ("LIST", )
+    RETURN_NAMES = ("croparea_list", )
+    FUNCTION = "func"
+    CATEGORY = "SuperUltimateVaceTools"
+    DESCRIPTION = "batch conditioning prompt list"
+    def func(self, clip, prompt_list, croparea_list):
+        if len(prompt_list) != len(croparea_list):
+            raise ValueError("提示词队列长度与切割队列长度不一致，检查节点连接是否正确\nLength of prompt_list is not same as croparea_list, check nodes connection")
+        index = 0
+        for prompt in prompt_list:
+            tokens = clip.tokenize(prompt)
+            croparea_list[index]['cond_p'] = clip.encode_from_tokens_scheduled(tokens)
+            index += 1
+
+        return (croparea_list, )
 
 
 NODE_CLASS_MAPPINGS = {
     "SuperUltimateVACEUpscale": UltimateVideoUpscaler,
-    "CustomCropArea": CustomCropArea
+    "CustomCropArea": CustomCropArea,
+    "BatchPromptCropArea": BatchPrompt
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "SuperUltimateVACEUpscale": "SuperUltimate VACE Upscale",
-    "CustomCropArea": "Custom Crop Area"
+    "CustomCropArea": "Custom Crop Area",
+    "BatchPromptCropArea": "Batch Prompt Crop Area"
 }
