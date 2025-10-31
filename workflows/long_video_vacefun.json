@@ -1,0 +1,2386 @@
+{
+  "id": "4db3b883-4480-4726-8285-2b0c6bd129a5",
+  "revision": 0,
+  "last_node_id": 177,
+  "last_link_id": 483,
+  "nodes": [
+    {
+      "id": 118,
+      "type": "Note",
+      "pos": [
+        -500,
+        -380
+      ],
+      "size": [
+        210,
+        88
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "Init image"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 73,
+      "type": "VACEPromptCheckTotalFrame",
+      "pos": [
+        530,
+        830
+      ],
+      "size": [
+        180,
+        26
+      ],
+      "flags": {},
+      "order": 36,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt_list",
+          "type": "PROMPTLIST",
+          "link": 255
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total_frame",
+          "type": "INT",
+          "links": [
+            280
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "48faf262ec77ef8867221223aa649aa2707bfb30",
+        "Node name for S&R": "VACEPromptCheckTotalFrame"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 95,
+      "type": "VACEControlImageCombine",
+      "pos": [
+        -510,
+        -570
+      ],
+      "size": [
+        288.7222595214844,
+        146
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 389
+        },
+        {
+          "name": "custom_mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "previous_control",
+          "shape": 7,
+          "type": "CONTROLIMAGELIST",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_control_list",
+          "type": "CONTROLIMAGELIST",
+          "links": [
+            237
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "05a708fa28f5bd061231c7b9d252dd2983d68c96",
+        "Node name for S&R": "VACEControlImageCombine"
+      },
+      "widgets_values": [
+        0,
+        true,
+        1
+      ]
+    },
+    {
+      "id": 145,
+      "type": "ImageResizeKJv2",
+      "pos": [
+        -800,
+        -570
+      ],
+      "size": [
+        260,
+        336
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 399
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            389,
+            390,
+            392,
+            393,
+            394,
+            395,
+            396,
+            397,
+            398,
+            459
+          ]
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            480
+          ]
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            481
+          ]
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "ImageResizeKJv2"
+      },
+      "widgets_values": [
+        512,
+        768,
+        "lanczos",
+        "stretch",
+        "0, 0, 0",
+        "center",
+        2,
+        "cpu"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "VACEControlImageCombine",
+      "pos": [
+        -510,
+        0
+      ],
+      "size": [
+        288.7222595214844,
+        146
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "control_image",
+          "type": "IMAGE",
+          "link": 471
+        },
+        {
+          "name": "custom_mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "previous_control",
+          "shape": 7,
+          "type": "CONTROLIMAGELIST",
+          "link": 237
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_control_list",
+          "type": "CONTROLIMAGELIST",
+          "links": [
+            478
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "05a708fa28f5bd061231c7b9d252dd2983d68c96",
+        "Node name for S&R": "VACEControlImageCombine"
+      },
+      "widgets_values": [
+        147,
+        false,
+        1
+      ]
+    },
+    {
+      "id": 133,
+      "type": "NAGParamtersSetting",
+      "pos": [
+        460,
+        210
+      ],
+      "size": [
+        210,
+        130
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "nag_params",
+          "type": "NAGParamtersSetting",
+          "links": [
+            479
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "NAGParamtersSetting"
+      },
+      "widgets_values": [
+        5,
+        2.5,
+        0.25,
+        0
+      ]
+    },
+    {
+      "id": 100,
+      "type": "Reroute",
+      "pos": [
+        530,
+        710
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 470
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "PROMPTLIST",
+          "links": [
+            255,
+            477
+          ]
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false
+      }
+    },
+    {
+      "id": 69,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        370,
+        -1370
+      ],
+      "size": [
+        570,
+        82
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 415
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            351
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "wan2.2_14b\\wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+        2
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 150,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        1010,
+        -1370
+      ],
+      "size": [
+        570,
+        82
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 416
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            413
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "wan2.2_14b\\wan2.2_i2v_A14b_high_noise_lora_rank64_lightx2v_4step_1022.safetensors",
+        1
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 74,
+      "type": "Display Int (rgthree)",
+      "pos": [
+        520,
+        940
+      ],
+      "size": [
+        210,
+        88
+      ],
+      "flags": {},
+      "order": 38,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "input",
+          "type": "INT",
+          "link": 280
+        }
+      ],
+      "outputs": [],
+      "title": "Total Frames",
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "5dc53323e07a021038af9f2a4a06ebc071f7218c",
+        "Node name for S&R": "Display Int (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 117,
+      "type": "Note",
+      "pos": [
+        -510,
+        190
+      ],
+      "size": [
+        280,
+        110
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "You can add extra control with 'VACE Control Image Combine', control input could be keyframe (should set 'masked' true), pose video, depth image, lineart image...VACE models support various control methods."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 4,
+      "type": "LoadImage",
+      "pos": [
+        -1100,
+        -570
+      ],
+      "size": [
+        274.080078125,
+        314
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            399
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "ComfyUI_temp_vpmnf_00008_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 48,
+      "type": "Seed (rgthree)",
+      "pos": [
+        450,
+        10
+      ],
+      "size": [
+        210,
+        130
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "dir": 4,
+          "name": "SEED",
+          "shape": 3,
+          "type": "INT",
+          "links": [
+            482
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "5dc53323e07a021038af9f2a4a06ebc071f7218c"
+      },
+      "widgets_values": [
+        73123286845857,
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 6,
+      "type": "LoadImage",
+      "pos": [
+        -1100,
+        0
+      ],
+      "size": [
+        274.080078125,
+        314.0000305175781
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            471
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "ComfyUI_temp_vpmnf_00008_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 15,
+      "type": "VAELoader",
+      "pos": [
+        170,
+        -200
+      ],
+      "size": [
+        290,
+        60
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            476
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "wan_2.1_vae.safetensors"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 129,
+      "type": "TorchCompileModelWanVideoV2",
+      "pos": [
+        650,
+        -1100
+      ],
+      "size": [
+        290,
+        202
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 386
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            333
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "TorchCompileModelWanVideoV2"
+      },
+      "widgets_values": [
+        "inductor",
+        false,
+        "max-autotune-no-cudagraphs",
+        false,
+        true,
+        64,
+        true
+      ]
+    },
+    {
+      "id": 79,
+      "type": "PathchSageAttentionKJ",
+      "pos": [
+        650,
+        -840
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 333
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            173
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "fca4aa2a155a6ae48179b1a1378dec6437e62a31",
+        "Node name for S&R": "PathchSageAttentionKJ"
+      },
+      "widgets_values": [
+        "sageattn_qk_int8_pv_fp16_cuda"
+      ]
+    },
+    {
+      "id": 80,
+      "type": "ModelSamplingSD3",
+      "pos": [
+        650,
+        -720
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 173
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            473
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ModelSamplingSD3"
+      },
+      "widgets_values": [
+        8.000000000000002
+      ]
+    },
+    {
+      "id": 153,
+      "type": "TorchCompileModelWanVideoV2",
+      "pos": [
+        1290,
+        -1110
+      ],
+      "size": [
+        290,
+        202
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 414
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            411
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "ba9153cb06fc77bfd86c36835f1817482e8328a0",
+        "Node name for S&R": "TorchCompileModelWanVideoV2"
+      },
+      "widgets_values": [
+        "inductor",
+        false,
+        "max-autotune-no-cudagraphs",
+        false,
+        true,
+        64,
+        true
+      ]
+    },
+    {
+      "id": 149,
+      "type": "PathchSageAttentionKJ",
+      "pos": [
+        1290,
+        -850
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 411
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            410
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-kjnodes",
+        "ver": "fca4aa2a155a6ae48179b1a1378dec6437e62a31",
+        "Node name for S&R": "PathchSageAttentionKJ"
+      },
+      "widgets_values": [
+        "sageattn_qk_int8_pv_fp16_cuda"
+      ]
+    },
+    {
+      "id": 148,
+      "type": "ModelSamplingSD3",
+      "pos": [
+        1290,
+        -740
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 410
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            474
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.44",
+        "Node name for S&R": "ModelSamplingSD3"
+      },
+      "widgets_values": [
+        8.000000000000002
+      ]
+    },
+    {
+      "id": 154,
+      "type": "UnetLoaderGGUF",
+      "pos": [
+        370,
+        -1480
+      ],
+      "size": [
+        570,
+        60
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            415
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GGUF",
+        "ver": "be2a08330d7ec232d684e50ab938870d7529471e",
+        "Node name for S&R": "UnetLoaderGGUF"
+      },
+      "widgets_values": [
+        "WanVideo\\Wan2.2-VACE-Fun-A14B-high-noise-Q4_K_M.gguf"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 18,
+      "type": "CLIPLoader",
+      "pos": [
+        170,
+        -360
+      ],
+      "size": [
+        400,
+        110
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            475
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "wan",
+        "default"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 123,
+      "type": "Note",
+      "pos": [
+        -510,
+        830
+      ],
+      "size": [
+        290,
+        150
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "These parameters are set to mitigate quality degradation due to multiple rounds of generation. They may not be optimized, you can adjust them by yourself.\n\nIf no 'custom_refine' is connected, init frames will be refined by the value of 'refine_init', else the value of 'refine_init' will be overwright by 'custom_refine'"
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 131,
+      "type": "CustomRefineOption",
+      "pos": [
+        -510,
+        580
+      ],
+      "size": [
+        290,
+        202
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 10,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "custom_refine_list",
+          "type": "REFINELIST",
+          "links": [
+            348,
+            354,
+            357,
+            360,
+            363,
+            366,
+            369,
+            372,
+            375
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "CustomRefineOption"
+      },
+      "widgets_values": [
+        "0.2",
+        "0.65",
+        "0",
+        "0",
+        "0.85, 1",
+        "1",
+        "0"
+      ]
+    },
+    {
+      "id": 120,
+      "type": "Note",
+      "pos": [
+        -200,
+        1230
+      ],
+      "size": [
+        280,
+        100
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "You can set different prompt, seed, model, lora and 'ref_image' for different 'VACE Prompt Combine' nodes."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 132,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        -70
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 390
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 348
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            355
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 136,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        360
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 459
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 354
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 355
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            358
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 137,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        790
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 392
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 357
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 358
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            361
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 138,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        1220
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 393
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 360
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 361
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            364
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 139,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        1650
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 394
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 363
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 364
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            367
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 140,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        2080
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 395
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 366
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 367
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            370
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 141,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        2510
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 396
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 369
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 370
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            373
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 142,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        2940
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 33,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 397
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 372
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 373
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            376
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 143,
+      "type": "VACEPromptCombine",
+      "pos": [
+        170,
+        3370
+      ],
+      "size": [
+        260,
+        380
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_override",
+          "shape": 7,
+          "type": "MODEL",
+          "link": null
+        },
+        {
+          "name": "ref_image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 398
+        },
+        {
+          "name": "custom_refine",
+          "shape": 7,
+          "type": "REFINELIST",
+          "link": 375
+        },
+        {
+          "name": "previous_prompt",
+          "shape": 7,
+          "type": "PROMPTLIST",
+          "link": 376
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "links": [
+            470
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VACEPromptCombine"
+      },
+      "widgets_values": [
+        "",
+        "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+        81,
+        14,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": 176,
+      "type": "VaceFunLongVideo",
+      "pos": [
+        700,
+        -190
+      ],
+      "size": [
+        290,
+        820
+      ],
+      "flags": {},
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model_h",
+          "type": "MODEL",
+          "link": 473
+        },
+        {
+          "name": "model_l",
+          "type": "MODEL",
+          "link": 474
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 475
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 476
+        },
+        {
+          "name": "vace_prompt_list",
+          "type": "PROMPTLIST",
+          "link": 477
+        },
+        {
+          "name": "vace_control_list",
+          "shape": 7,
+          "type": "CONTROLIMAGELIST",
+          "link": 478
+        },
+        {
+          "name": "nag_params",
+          "shape": 7,
+          "type": "NAGParamtersSetting",
+          "link": 479
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": 480
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": 481
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": 482
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            483
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-SuperUltimateVaceTools",
+        "ver": "670875de248b5a3fcc1dad54416c51f971b194d6",
+        "Node name for S&R": "VaceFunLongVideo"
+      },
+      "widgets_values": [
+        832,
+        480,
+        0,
+        0,
+        "randomize",
+        2,
+        1,
+        "euler",
+        "simple",
+        2,
+        1,
+        "sa_solver",
+        "simple"
+      ]
+    },
+    {
+      "id": 81,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        1010,
+        -190
+      ],
+      "size": [
+        390,
+        903
+      ],
+      "flags": {},
+      "order": 39,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 483
+        },
+        {
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        },
+        {
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-videohelpersuite",
+        "ver": "a7ce59e381934733bfae03b1be029756d6ce936d",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 15,
+        "loop_count": 0,
+        "filename_prefix": "bbaudio/SuperUltimateVACELongVideo",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 19,
+        "save_metadata": false,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": false,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "SuperUltimateVACELongVideo_00002.mp4",
+            "subfolder": "bbaudio",
+            "type": "temp",
+            "format": "video/h264-mp4",
+            "frame_rate": 15,
+            "workflow": "SuperUltimateVACELongVideo_00002.png",
+            "fullpath": "D:\\AI\\ComfyUI_windows_portable\\ComfyUI\\temp\\bbaudio\\SuperUltimateVACELongVideo_00002.mp4"
+          }
+        }
+      }
+    },
+    {
+      "id": 134,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        370,
+        -1240
+      ],
+      "size": [
+        570,
+        82
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 351
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            386
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "wan2.2_14b\\wlkng_m1_v1_high_noise.safetensors",
+        1.5
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 151,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        1010,
+        -1240
+      ],
+      "size": [
+        570,
+        82
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 413
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            414
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "wan2.2_14b\\wlkng_m1_v1_low_noise.safetensors",
+        1
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 155,
+      "type": "UnetLoaderGGUF",
+      "pos": [
+        1010,
+        -1480
+      ],
+      "size": [
+        560,
+        60
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            416
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-GGUF",
+        "ver": "be2a08330d7ec232d684e50ab938870d7529471e",
+        "Node name for S&R": "UnetLoaderGGUF"
+      },
+      "widgets_values": [
+        "WanVideo\\Wan2.2-VACE-Fun-A14B-low-noise-Q4_K_M.gguf"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    }
+  ],
+  "links": [
+    [
+      173,
+      79,
+      0,
+      80,
+      0,
+      "MODEL"
+    ],
+    [
+      237,
+      95,
+      0,
+      2,
+      2,
+      "CONTROLIMAGELIST"
+    ],
+    [
+      255,
+      100,
+      0,
+      73,
+      0,
+      "PROMPTLIST"
+    ],
+    [
+      280,
+      73,
+      0,
+      74,
+      0,
+      "INT"
+    ],
+    [
+      333,
+      129,
+      0,
+      79,
+      0,
+      "MODEL"
+    ],
+    [
+      348,
+      131,
+      0,
+      132,
+      2,
+      "REFINELIST"
+    ],
+    [
+      351,
+      69,
+      0,
+      134,
+      0,
+      "MODEL"
+    ],
+    [
+      354,
+      131,
+      0,
+      136,
+      2,
+      "REFINELIST"
+    ],
+    [
+      355,
+      132,
+      0,
+      136,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      357,
+      131,
+      0,
+      137,
+      2,
+      "REFINELIST"
+    ],
+    [
+      358,
+      136,
+      0,
+      137,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      360,
+      131,
+      0,
+      138,
+      2,
+      "REFINELIST"
+    ],
+    [
+      361,
+      137,
+      0,
+      138,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      363,
+      131,
+      0,
+      139,
+      2,
+      "REFINELIST"
+    ],
+    [
+      364,
+      138,
+      0,
+      139,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      366,
+      131,
+      0,
+      140,
+      2,
+      "REFINELIST"
+    ],
+    [
+      367,
+      139,
+      0,
+      140,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      369,
+      131,
+      0,
+      141,
+      2,
+      "REFINELIST"
+    ],
+    [
+      370,
+      140,
+      0,
+      141,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      372,
+      131,
+      0,
+      142,
+      2,
+      "REFINELIST"
+    ],
+    [
+      373,
+      141,
+      0,
+      142,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      375,
+      131,
+      0,
+      143,
+      2,
+      "REFINELIST"
+    ],
+    [
+      376,
+      142,
+      0,
+      143,
+      3,
+      "PROMPTLIST"
+    ],
+    [
+      386,
+      134,
+      0,
+      129,
+      0,
+      "MODEL"
+    ],
+    [
+      389,
+      145,
+      0,
+      95,
+      0,
+      "IMAGE"
+    ],
+    [
+      390,
+      145,
+      0,
+      132,
+      1,
+      "IMAGE"
+    ],
+    [
+      392,
+      145,
+      0,
+      137,
+      1,
+      "IMAGE"
+    ],
+    [
+      393,
+      145,
+      0,
+      138,
+      1,
+      "IMAGE"
+    ],
+    [
+      394,
+      145,
+      0,
+      139,
+      1,
+      "IMAGE"
+    ],
+    [
+      395,
+      145,
+      0,
+      140,
+      1,
+      "IMAGE"
+    ],
+    [
+      396,
+      145,
+      0,
+      141,
+      1,
+      "IMAGE"
+    ],
+    [
+      397,
+      145,
+      0,
+      142,
+      1,
+      "IMAGE"
+    ],
+    [
+      398,
+      145,
+      0,
+      143,
+      1,
+      "IMAGE"
+    ],
+    [
+      399,
+      4,
+      0,
+      145,
+      0,
+      "IMAGE"
+    ],
+    [
+      410,
+      149,
+      0,
+      148,
+      0,
+      "MODEL"
+    ],
+    [
+      411,
+      153,
+      0,
+      149,
+      0,
+      "MODEL"
+    ],
+    [
+      413,
+      150,
+      0,
+      151,
+      0,
+      "MODEL"
+    ],
+    [
+      414,
+      151,
+      0,
+      153,
+      0,
+      "MODEL"
+    ],
+    [
+      415,
+      154,
+      0,
+      69,
+      0,
+      "MODEL"
+    ],
+    [
+      416,
+      155,
+      0,
+      150,
+      0,
+      "MODEL"
+    ],
+    [
+      459,
+      145,
+      0,
+      136,
+      1,
+      "IMAGE"
+    ],
+    [
+      470,
+      143,
+      0,
+      100,
+      0,
+      "*"
+    ],
+    [
+      471,
+      6,
+      0,
+      2,
+      0,
+      "IMAGE"
+    ],
+    [
+      473,
+      80,
+      0,
+      176,
+      0,
+      "MODEL"
+    ],
+    [
+      474,
+      148,
+      0,
+      176,
+      1,
+      "MODEL"
+    ],
+    [
+      475,
+      18,
+      0,
+      176,
+      2,
+      "CLIP"
+    ],
+    [
+      476,
+      15,
+      0,
+      176,
+      3,
+      "VAE"
+    ],
+    [
+      477,
+      100,
+      0,
+      176,
+      4,
+      "PROMPTLIST"
+    ],
+    [
+      478,
+      2,
+      0,
+      176,
+      5,
+      "CONTROLIMAGELIST"
+    ],
+    [
+      479,
+      133,
+      0,
+      176,
+      6,
+      "NAGParamtersSetting"
+    ],
+    [
+      480,
+      145,
+      1,
+      176,
+      7,
+      "INT"
+    ],
+    [
+      481,
+      145,
+      2,
+      176,
+      8,
+      "INT"
+    ],
+    [
+      482,
+      48,
+      0,
+      176,
+      9,
+      "INT"
+    ],
+    [
+      483,
+      176,
+      0,
+      81,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "High Noise Model",
+      "bounding": [
+        350,
+        -1570,
+        610,
+        930
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Low Noise Model",
+      "bounding": [
+        990,
+        -1570,
+        610,
+        930
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6115909044841806,
+      "offset": [
+        688.4693058013027,
+        2069.0995439091466
+      ]
+    },
+    "frontendVersion": "1.27.10",
+    "VHS_latentpreview": true,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
