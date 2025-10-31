@@ -1,6 +1,6 @@
 import torch
 import comfy
-from .nag.sample import sample_with_nag
+from .nag.sample import sample_with_nag #from https://github.com/ChenDarYen/ComfyUI-NAG
 import nodes
 import node_helpers
 import latent_preview
@@ -211,9 +211,8 @@ def crossfadevideos(video1, video2, num_corssfade_frame):
     result = torch.cat((video_slice1, blended_slice, video_slice4), dim=0)
     return result
 
-def vace_sample(model, positive, negative, vae, width, height, length, strength, seed, cfg, sampler_name, scheduler, steps, denoise, video, nag_parameters=None,
-                control_video=None, control_masks=None, reference_image=None, tile_control_video=None, latent_strength_list=None):
-    # from comfyui
+def vace_cond_execute(positive, negative, vae, width, height, length, batch_size, strength, input_video=None, control_video=None, control_masks=None, reference_image=None, latent_strength_list=None):
+    #from comfyui, modified
     latent_length = ((length - 1) // 4) + 1
     if control_video is not None:
         control_video = comfy.utils.common_upscale(control_video[:length].movedim(-1, 1), width, height, "bilinear", "center").movedim(1, -1)
@@ -245,12 +244,12 @@ def vace_sample(model, positive, negative, vae, width, height, length, strength,
     inactive = vae.encode(inactive[:, :, :, :3])
     reactive = vae.encode(reactive[:, :, :, :3])
     control_video_latent = torch.cat((inactive, reactive), dim=1)
+
     if latent_strength_list is not None:
         for i in range(len(latent_strength_list)):
             control_video_latent[:, :, [i],].mul_(latent_strength_list[i])
     if reference_image is not None:
         control_video_latent = torch.cat((reference_image, control_video_latent), dim=2)
-
     vae_stride = 8
     height_mask = height // vae_stride
     width_mask = width // vae_stride
@@ -271,32 +270,26 @@ def vace_sample(model, positive, negative, vae, width, height, length, strength,
     positive = node_helpers.conditioning_set_values(positive, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
     negative = node_helpers.conditioning_set_values(negative, {"vace_frames": [control_video_latent], "vace_mask": [mask], "vace_strength": [strength]}, append=True)
 
-    # sample
-
-    latent = vae.encode(video[:,:,:,:3])
-    if reference_image is not None:
-        latent = torch.cat((reference_image_vaed, latent), dim=2)
-    noise = comfy.sample.prepare_noise(latent, seed)
-
-    callback = latent_preview.prepare_callback(model, steps)
-    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
-    if nag_parameters is None:
-        samples = comfy.sample.sample(model, noise, steps, cfg, sampler_name, scheduler, positive, negative, latent,
-                                    denoise=denoise, disable_noise=None, start_step=None, last_step=None,
-                                    force_full_denoise=False, noise_mask=None, callback=callback, disable_pbar=disable_pbar, seed=seed)
+    if input_video is not None:
+        latent = vae.encode(input_video[:,:,:,:3])
     else:
-        nag_scale = nag_parameters['nag_scale']
-        nag_tau = nag_parameters['nag_tau']
-        nag_alpha = nag_parameters['nag_alpha']
-        nag_sigma_end = nag_parameters['nag_sigma_end']
-        nag_negative = negative
-        samples = sample_with_nag(model, noise, steps, cfg, nag_scale, nag_tau, nag_alpha, nag_sigma_end, sampler_name, scheduler, positive,
-            negative, nag_negative, latent,
-            denoise=denoise, disable_noise=False, start_step=None, last_step=None,
-            force_full_denoise=False, noise_mask=None, callback=callback, disable_pbar=disable_pbar,
-            seed=seed)
-    samples = samples[:, :, trim_latent:]
-    images = vae.decode(samples)
+        latent = torch.zeros([batch_size, 16, latent_length, height // 8, width // 8], device=comfy.model_management.intermediate_device())
+    if reference_image is not None and input_video is not None:
+        latent = torch.cat((reference_image_vaed, latent), dim=2)
+    out_latent = {}
+    out_latent["samples"] = latent
+    return {'positive': positive, 'negative': negative, 'out_latent': out_latent, 'trim_latent': trim_latent}
+
+def trim_video_latent_execute(samples, trim_amount):
+    #from comfyui
+    samples_out = samples.copy()
+    s1 = samples["samples"]
+    samples_out["samples"] = s1[:, :, trim_amount:]
+    return samples_out
+
+def vae_decode(vae, samples):
+    #from comfyui
+    images = vae.decode(samples["samples"])
     if len(images.shape) == 5: #Combine batches
         images = images.reshape(-1, images.shape[-3], images.shape[-2], images.shape[-1])
     return images
@@ -462,9 +455,28 @@ QQ群：948626609
                     end_ctl = imagecrop(upscaled_videos_list[0][:loopback_crossfade].clone(), width_crop_n, height_crop_n, offset_x_n, offset_y_n)
                     controls[-loopback_crossfade:] = end_ctl
                     mask_ctl[-loopback_crossfade:] = torch.full((1, height_crop_n, width_crop_n), 0.0, device='cpu')
+                conditions = vace_cond_execute(positive, negative, vae, width, height, length_n, 1, strength, input_video=video, control_video=controls, control_masks=mask_ctl, reference_image=refimg, latent_strength_list=None)
                 nag_parameters = nag_params
-                sampled_video = vace_sample(model, positive, negative, vae, width_crop_n, height_crop_n, length_n, strength, seed, cfg, sampler_name, scheduler, steps, denoise, video, nag_parameters=nag_parameters, 
-                    control_video=controls, control_masks=mask_ctl, reference_image=refimg)
+                if nag_parameters is None:
+                    sample = nodes.common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, conditions['positive'], conditions['negative'], conditions['out_latent'], 
+                                                        denoise=denoise, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False)[0]
+                else:
+                    latent_image = conditions['out_latent']["samples"]
+                    latent_image = comfy.sample.fix_empty_latent_channels(model, latent_image)
+                    noise = comfy.sample.prepare_noise(latent_image, seed, None)
+                    callback = latent_preview.prepare_callback(model, steps)
+                    disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
+                    nag_scale = nag_parameters['nag_scale']
+                    nag_tau = nag_parameters['nag_tau']
+                    nag_alpha = nag_parameters['nag_alpha']
+                    nag_sigma_end = nag_parameters['nag_sigma_end']
+                    nag_negative = conditions['negative']
+                    nag_sample_out = sample_with_nag(model, noise, steps, cfg, nag_scale, nag_tau, nag_alpha, nag_sigma_end, sampler_name, scheduler, conditions['positive'], conditions['negative'], 
+                                            nag_negative, latent_image, denoise=denoise, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False, 
+                                            noise_mask=None, callback=callback, disable_pbar=disable_pbar, seed=seed)
+                    sample = {"samples": nag_sample_out}
+                trimmed_sample = trim_video_latent_execute(sample, conditions['trim_latent'])
+                sampled_video = vae_decode(vae, trimmed_sample)
                 mask_feather = feather(torch.full((1, height_crop_n, width_crop_n), 1.0, device='cpu'), item['feather_left'], item['feather_top'], item['feather_right'], item['feather_bottom'])
                 mask_feather = repeat_tensor(mask_feather, length_n)
                 result_video = imgcomposite(result_video, sampled_video, offset_x_n, offset_y_n, mask_feather)
@@ -769,9 +781,9 @@ QQ群：948626609
                     control_mask[index_start:index_end + 1] = custom_mask
         # deal with prompt list
         sampled = []
-        debug_control = []
-        debug_mask = []
-        debug_crossframes = {}
+        # debug_control = []
+        # debug_mask = []
+        # debug_crossframes = {}
         vace_prompt_list[-1]['flag_end'] = True
         processed_frame_count = 0
         for item in vace_prompt_list:
@@ -787,8 +799,11 @@ QQ群：948626609
             latent_strength_list = item['latent_strength_list']
             colormatch_strength_list = item['colormatch_strength_list']
             ref_image = item['ref_image']
+            vace_strength = item['vace_strength']
             if item['model_override'] is not None:
                 model = item['model_override']
+            if item['seed_override'] != 0:
+                seed = item['seed_override']
             # control
             if processed_frame_count == 0:
                 controls = control_video[:num_frame].clone()
@@ -817,22 +832,228 @@ QQ群：948626609
             if item['flag_end'] is True and loopback_crossfade > 0:
                 controls[-loopback_crossfade:] = sampled[0][:loopback_crossfade].clone()
                 mask_ctl[-loopback_crossfade:] = torch.full((loopback_crossfade, height, width), 0.0, device='cpu')
-            empty_video = torch.zeros([num_frame, height, width, 3])
             p_tokens = clip.tokenize(positive_prompt)
             n_tokens = clip.tokenize(negative_prompt)
             cond_p =  clip.encode_from_tokens_scheduled(p_tokens)
             cond_n = clip.encode_from_tokens_scheduled(n_tokens)
+            conditions = vace_cond_execute(cond_p, cond_n, vae, width, height, num_frame, 1, vace_strength, control_video=controls, control_masks=mask_ctl, reference_image=ref_image, latent_strength_list=latent_strength_list)
             nag_parameters = nag_params
-            sample_result = vace_sample(model, cond_p, cond_n, vae, width, height, num_frame, 1, seed, cfg, sampler_name, scheduler, steps, denoise, empty_video, nag_parameters=nag_parameters, 
-                    control_video=controls, control_masks=mask_ctl, reference_image=ref_image, latent_strength_list=latent_strength_list)
+            if nag_parameters is None:
+                sample = nodes.common_ksampler(model, seed, steps, cfg, sampler_name, scheduler, conditions['positive'], conditions['negative'], conditions['out_latent'], 
+                                                    denoise=1.0, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False)[0]
+            else:
+                latent_image = conditions['out_latent']["samples"]
+                latent_image = comfy.sample.fix_empty_latent_channels(model, latent_image)
+                noise = comfy.sample.prepare_noise(latent_image, seed, None)
+                callback = latent_preview.prepare_callback(model, steps)
+                disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
+                nag_scale = nag_parameters['nag_scale']
+                nag_tau = nag_parameters['nag_tau']
+                nag_alpha = nag_parameters['nag_alpha']
+                nag_sigma_end = nag_parameters['nag_sigma_end']
+                nag_negative = conditions['negative']
+                nag_sample_out = sample_with_nag(model, noise, steps, cfg, nag_scale, nag_tau, nag_alpha, nag_sigma_end, sampler_name, scheduler, conditions['positive'], conditions['negative'], 
+                                           nag_negative, latent_image, denoise=denoise, disable_noise=False, start_step=None, last_step=None, force_full_denoise=False, 
+                                           noise_mask=None, callback=callback, disable_pbar=disable_pbar, seed=seed)
+                sample = {"samples": nag_sample_out}
+            trimmed_sample = trim_video_latent_execute(sample, conditions['trim_latent'])
+            sample_result = vae_decode(vae, trimmed_sample)
             if processed_frame_count > 0 and colormatch_strength_list[i] > 0.001:
                 image_ref = sampled[-1][-1:]
                 for i in range(init_crossfade_frame):
                     sample_result[[i],] = colormatch(image_ref, sample_result[[i],], strength=colormatch_strength_list[i])
             processed_frame_count += num_frame - init_crossfade_frame
-            debug_control.append(controls)
-            debug_mask.append(mask_ctl)
-            debug_crossframes['colormatched'] = sample_result[:init_crossfade_frame+5]
+            # debug_control.append(controls)
+            # debug_mask.append(mask_ctl)
+            # debug_crossframes['colormatched'] = sample_result[:init_crossfade_frame+5]
+            sampled.append(sample_result)
+        result_video = sampled.pop(0)
+        index = 0
+        while index < len(sampled):
+            cross_fade = vace_prompt_list[index + 1]['init_crossfade_frame']
+            result_video = crossfadevideos(result_video, sampled[index], cross_fade)
+            index += 1
+        if loopback_crossfade > 0:
+            crossed_start = crossfadevideos(result_video[-loopback_crossfade:], result_video[:loopback_crossfade], loopback_crossfade)
+            result_video[:loopback_crossfade] = crossed_start
+            result_video = result_video[:(total_frame - loopback_crossfade)]
+        return (result_video, )
+        # return (result_video, debug_control, debug_mask, debug_crossframes)
+
+class VaceFunLongVideo:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_h": ("MODEL", {"tooltip": "high noise model"}),
+                "model_l": ("MODEL", {"tooltip": "low noise model"}),
+                "clip": (IO.CLIP, {"tooltip": "The CLIP model used for encoding the text."}),
+                "vae": ("VAE", ),
+                "width": ("INT", {"default": 832, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 16}),
+                "height": ("INT", {"default": 480, "min": 16, "max": nodes.MAX_RESOLUTION, "step": 16}),
+                "loopback_crossfade": ("INT", {"default": 0, "min": 0, "max": 10000, "step": 1}),
+                "vace_prompt_list": ("PROMPTLIST", ),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "control_after_generate": True, }),
+                "steps_h": ("INT", {"default": 20, "min": 1, "max": 10000, }),
+                "cfg_h": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01, }),
+                "sampler_h": (comfy.samplers.KSampler.SAMPLERS, ),
+                "scheduler_h": (comfy.samplers.KSampler.SCHEDULERS, ),
+                "steps_l": ("INT", {"default": 20, "min": 1, "max": 10000, }),
+                "cfg_l": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0, "step":0.1, "round": 0.01, }),
+                "sampler_l": (comfy.samplers.KSampler.SAMPLERS, ),
+                "scheduler_l": (comfy.samplers.KSampler.SCHEDULERS, ),
+            },
+            "optional": {
+                "vace_control_list": ("CONTROLIMAGELIST", ),
+                "nag_params": ("NAGParamtersSetting", ),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", )
+    # RETURN_TYPES = ("IMAGE", "LIST", "LIST", "IMAGE", )
+    OUTPUT_TOOLTIPS = ("Generated Video",)
+    FUNCTION = "long_video_vace_fun"
+
+    CATEGORY = "SuperUltimateVaceTools"
+    DESCRIPTION = """
+VACE长视频拼接|Long video by concating multiple parts
+by bbaudio
+联系方式
+QQ：1953761458
+Email：1953761458@qq.com
+QQ群：948626609
+"""
+    def long_video_vace_fun(self, model_h, model_l, clip, vae, width, height, loopback_crossfade, vace_prompt_list, seed, steps_h, cfg_h, sampler_h, scheduler_h, steps_l, cfg_l, sampler_l, scheduler_l, 
+                   vace_control_list=None, nag_params=None):
+        # check prompt list
+        if len(vace_prompt_list) == 1:
+            vace_prompt_list[0]['init_crossfade_frame'] = 0
+        # get total frame
+        total_frame = 0
+        for item in vace_prompt_list:
+            num_frame = item['num_frame']
+            init_crossfade_frame = item['init_crossfade_frame']
+            total_frame += num_frame - init_crossfade_frame
+            if loopback_crossfade > num_frame:
+                raise ValueError("循环过渡帧数目不能超过生成长度\nloopback_crossfade can not be larger than length of generation")
+        # deal with control list
+        control_video = torch.full((total_frame, height, width, 3), 0.5, device='cpu')
+        control_mask = torch.full((total_frame, height, width), 1.0, device='cpu')
+        if vace_control_list is not None:
+            check_overlap(vace_control_list)
+            vace_control_list = sort_list(vace_control_list)
+            index_final = vace_control_list[-1]['control_end_index']
+            if index_final >= total_frame:
+                raise ValueError("控制帧长度超过生成长度\nLength of control image exceeds length of generation")
+            for item in vace_control_list:
+                index_start = item['frame_position']
+                index_end = item['control_end_index']
+                control_images = comfy.utils.common_upscale(item['control_image'].movedim(-1, 1), width, height, "bilinear", "center").movedim(1, -1)
+                control_images = repeat_tensor(control_images, item['repeat'])
+                custom_mask = item['custom_mask']
+                if custom_mask is not None:
+                    if custom_mask.shape[1] != height or custom_mask.shape[2] != width:
+                        custom_mask = comfy.utils.common_upscale(custom_mask.unsqueeze(1), width, height, "bilinear", "else").squeeze(1)
+                control_video[index_start:index_end + 1] = control_images[:index_end + 1 - index_start]
+                if custom_mask is None and item['masked'] is True :
+                    control_mask[index_start:index_end + 1] = torch.full((index_end + 1 - index_start, height, width), 0.0, device='cpu')
+                elif custom_mask is not None and item['masked'] is True :
+                    control_mask[index_start:index_end + 1] = custom_mask
+        # deal with prompt list
+        sampled = []
+        # debug_control = []
+        # debug_mask = []
+        # debug_crossframes = {}
+        vace_prompt_list[-1]['flag_end'] = True
+        processed_frame_count = 0
+        for item in vace_prompt_list:
+            num_frame = item['num_frame']
+            positive_prompt = item['prompt_p']
+            negative_prompt = item['prompt_n']
+            init_crossfade_frame = item['init_crossfade_frame']
+            whiten_list = item['whiten_list']
+            saturation_list = item['saturation_list']
+            blur_list = item['blur_list']
+            contour_list = item['contour_list']
+            mask_value_list = item['mask_value_list']
+            latent_strength_list = item['latent_strength_list']
+            colormatch_strength_list = item['colormatch_strength_list']
+            ref_image = item['ref_image']
+            vace_strength = item['vace_strength']
+            # if item['model_override'] is not None:
+            #     model = item['model_override']
+            if item['seed_override'] != 0:
+                seed = item['seed_override']
+            # control
+            if processed_frame_count == 0:
+                controls = control_video[:num_frame].clone()
+                mask_ctl = control_mask[:num_frame].clone()
+            else:
+                controls = control_video[processed_frame_count - init_crossfade_frame:processed_frame_count - init_crossfade_frame + num_frame].clone()
+                mask_ctl = control_mask[processed_frame_count - init_crossfade_frame:processed_frame_count - init_crossfade_frame + num_frame].clone()
+                for i in range(init_crossfade_frame):
+                    crossfade_previous_frames = sampled[-1][[i-init_crossfade_frame],]
+                    refined_control = tensor2pil(crossfade_previous_frames)
+                    if saturation_list[i] < 0.999:
+                        refined_control = img_greyscale_pil(refined_control, saturation_list[i])
+                    if whiten_list[i] > 0.001:
+                        refined_control = img_whiten_pil(refined_control, whiten_list[i])
+                    if blur_list[i] > 0.001:
+                        refined_control = img_blur_pil(refined_control, blur_list[i])
+                    if contour_list[i] > 0.001:
+                        contoured = img_contour_pil(tensor2pil(crossfade_previous_frames))
+                        mask_contour = color2mask_pil(contoured, 1 - contour_list[i])
+                        mask_contour = pil2tensor(mask_contour)[:, :, :, 0]
+                        refined_control = imgcomposite(pil2tensor(refined_control), pil2tensor(contoured), 0, 0, 1 - mask_contour)
+                    else:
+                        refined_control = pil2tensor(refined_control)
+                    controls[[i],] = refined_control
+                    mask_ctl[[i],] = torch.full((1, height, width), mask_value_list[i], device='cpu')
+            if item['flag_end'] is True and loopback_crossfade > 0:
+                controls[-loopback_crossfade:] = sampled[0][:loopback_crossfade].clone()
+                mask_ctl[-loopback_crossfade:] = torch.full((loopback_crossfade, height, width), 0.0, device='cpu')
+            p_tokens = clip.tokenize(positive_prompt)
+            n_tokens = clip.tokenize(negative_prompt)
+            cond_p =  clip.encode_from_tokens_scheduled(p_tokens)
+            cond_n = clip.encode_from_tokens_scheduled(n_tokens)
+            conditions = vace_cond_execute(cond_p, cond_n, vae, width, height, num_frame, 1, vace_strength, control_video=controls, control_masks=mask_ctl, reference_image=ref_image, latent_strength_list=latent_strength_list)
+            nag_parameters = nag_params
+            steps = steps_h + steps_l
+            if nag_parameters is None:
+                sample_h = nodes.common_ksampler(model_h, seed, steps, cfg_h, sampler_h, scheduler_h, conditions['positive'], conditions['negative'], conditions['out_latent'], 
+                                                    denoise=1.0, disable_noise=False, start_step=0, last_step=steps_h, force_full_denoise=False)[0]
+                sample_l = nodes.common_ksampler(model_l, seed, steps, cfg_l, sampler_l, scheduler_l, conditions['positive'], conditions['negative'], sample_h, 
+                                                    denoise=1.0, disable_noise=True, start_step=steps_h, last_step=10000, force_full_denoise=True)[0]
+            else:
+                latent_image = conditions['out_latent']["samples"]
+                latent_image = comfy.sample.fix_empty_latent_channels(model_h, latent_image)
+                noise_h = comfy.sample.prepare_noise(latent_image, seed, None)
+                noise_l = torch.zeros(latent_image.size(), dtype=latent_image.dtype, layout=latent_image.layout, device="cpu")
+                callback_h = latent_preview.prepare_callback(model_h, steps)
+                callback_l = latent_preview.prepare_callback(model_l, steps)
+                disable_pbar = not comfy.utils.PROGRESS_BAR_ENABLED
+                nag_scale = nag_parameters['nag_scale']
+                nag_tau = nag_parameters['nag_tau']
+                nag_alpha = nag_parameters['nag_alpha']
+                nag_sigma_end = nag_parameters['nag_sigma_end']
+                nag_negative = conditions['negative']
+                nag_sample_out_h = sample_with_nag(model_h, noise_h, steps, cfg_h, nag_scale, nag_tau, nag_alpha, nag_sigma_end, sampler_h, scheduler_h, conditions['positive'], conditions['negative'], 
+                                           nag_negative, latent_image, denoise=1.0, disable_noise=False, start_step=0, last_step=steps_h, force_full_denoise=False, 
+                                           noise_mask=None, callback=callback_h, disable_pbar=disable_pbar, seed=seed)
+                nag_sample_out_l = sample_with_nag(model_l, noise_l, steps, cfg_l, nag_scale, nag_tau, nag_alpha, nag_sigma_end, sampler_l, scheduler_l, conditions['positive'], conditions['negative'], 
+                                           nag_negative, nag_sample_out_h, denoise=1.0, disable_noise=True, start_step=steps_h, last_step=10000, force_full_denoise=True, 
+                                           noise_mask=None, callback=callback_l, disable_pbar=disable_pbar, seed=seed)
+                sample_l = {"samples": nag_sample_out_l}
+            trimmed_sample = trim_video_latent_execute(sample_l, conditions['trim_latent'])
+            sample_result = vae_decode(vae, trimmed_sample)
+            if processed_frame_count > 0 and colormatch_strength_list[i] > 0.001:
+                image_ref = sampled[-1][-1:]
+                for i in range(init_crossfade_frame):
+                    sample_result[[i],] = colormatch(image_ref, sample_result[[i],], strength=colormatch_strength_list[i])
+            processed_frame_count += num_frame - init_crossfade_frame
+            # debug_control.append(controls)
+            # debug_mask.append(mask_ctl)
+            # debug_crossframes['colormatched'] = sample_result[:init_crossfade_frame+5]
             sampled.append(sample_result)
         result_video = sampled.pop(0)
         index = 0
@@ -894,12 +1115,14 @@ class VACEPromptCombine:
                 "num_frame": ("INT", {"default": 81, "min": 5, "max": 65535, "step": 4}),
                 "init_crossfade_frame": ("INT", {"default": 3, "min": 0, "max": 65535, "step": 1}),
                 "refine_init": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "vace_strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
             },
             "optional": {
-                "model_override": ("MODEL", {"tooltip": "Use this model in this generation"}),
+                "model_override": ("MODEL", {"tooltip": "Use this model in this generation, no use for fun vace"}),
                 "ref_image": ("IMAGE", ),
                 "custom_refine": ("REFINELIST", ),
                 "previous_prompt": ("PROMPTLIST", ),
+                "seed_override": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff, "tooltip": "will be ignored when set to 0"}),
             }
         }
 
@@ -909,7 +1132,7 @@ class VACEPromptCombine:
 
     CATEGORY = "SuperUltimateVaceTools"
     DESCRIPTION = ""
-    def combine_prompt(self, positive_prompt, negative_prompt, num_frame, init_crossfade_frame, refine_init, model_override=None, ref_image=None, custom_refine=None, previous_prompt=None):
+    def combine_prompt(self, positive_prompt, negative_prompt, num_frame, init_crossfade_frame, refine_init, vace_strength, model_override=None, ref_image=None, custom_refine=None, previous_prompt=None, seed_override=None):
         if init_crossfade_frame > num_frame:
             raise ValueError("过渡帧数目不能大于总帧数\ninit_crossfade_frame can not be larger than num_frame")
         prompt_list = []
@@ -941,10 +1164,12 @@ class VACEPromptCombine:
             prompt_list.extend(previous_prompt)
         prompt_list.append({
             'model_override': model_override,
+            'seed_override': seed_override,
             'prompt_p': positive_prompt,
             'prompt_n': negative_prompt,
             'num_frame': num_frame,
             'init_crossfade_frame': init_crossfade_frame,
+            'vace_strength': vace_strength,
             'whiten_list': [refine_init] * init_crossfade_frame if custom_refine is None else whiten_list,
             'saturation_list': [1.0] * init_crossfade_frame if custom_refine is None else saturation_list,
             'blur_list': [0.0] * init_crossfade_frame if custom_refine is None else blur_list,
@@ -1117,6 +1342,7 @@ NODE_CLASS_MAPPINGS = {
     "VACEControlImageCombine": VACEControlImageCombine,
     "VACEPromptCombine": VACEPromptCombine,
     "VaceLongVideo": VaceLongVideo,
+    "VaceFunLongVideo": VaceFunLongVideo,
     "VACEPromptCheckTotalFrame": VACEPromptCheckTotalFrame,
     "CustomRefineOption": CustomRefineOption,
     "NAGParamtersSetting": NAGParamtersSetting,
@@ -1130,6 +1356,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "VACEControlImageCombine": "VACE Control Image Combine",
     "VACEPromptCombine": "VACE Prompt Combine",
     "VaceLongVideo": "SuperUltimate VACE Long Video",
+    "VaceFunLongVideo": "SuperUltimate VACEFUN Long Video",
     "VACEPromptCheckTotalFrame": "Check Total Frame",
     "CustomRefineOption": "Custom Refine Option",
     "NAGParamtersSetting": "NAG Paramters Setting",
